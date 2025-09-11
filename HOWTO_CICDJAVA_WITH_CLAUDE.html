@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Java CI/CD Pipeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The SPA is designed as an interactive workflow diagram. The main view visually lays out the 11 steps of the CI/CD pipeline. Clicking on any step dynamically populates a detail pane with the corresponding agent's information (role, commands, etc.). This structure was chosen to transform the linear document into an explorable, non-linear experience, allowing users to grasp the overall process at a glance and then dive into specific details as needed, which is more intuitive for understanding a complex technical workflow. -->
+    <!-- Visualization & Content Choices: Report Info: CI/CD Workflow Steps -> Goal: Organize & Inform -> Viz/Presentation: Interactive HTML/CSS Flow Diagram & Dynamic Text Pane -> Interaction: Click a step to view its details. -> Justification: Visually represents the process flow, the core concept of the report. The click-to-reveal pattern encourages exploration and breaks down complex information into manageable chunks. -> Library/Method: Vanilla JS for interaction, Tailwind CSS for layout. -> CONFIRMATION: NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .flow-step {
+            transition: all 0.3s ease;
+            border-width: 2px;
+            border-style: solid;
+        }
+        .flow-step.active {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #3b82f6; /* blue-500 */
+        }
+        .flow-connector {
+            flex-grow: 1;
+            height: 2px;
+            background-color: #d1d5db; /* gray-300 */
+        }
+        .flow-arrow::after {
+            content: '►';
+            color: #d1d5db; /* gray-300 */
+            margin: 0 0.5rem;
+        }
+        @media (max-width: 1024px) {
+            .flow-connector {
+                width: 2px;
+                height: 3rem;
+                margin: 0.5rem 0;
+            }
+            .flow-arrow::after {
+                content: '▼';
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900">Java CI/CD Pipeline Explorer</h1>
+            <p class="mt-4 text-lg text-stone-600 max-w-3xl mx-auto">An interactive visualization of a Java application deployment pipeline orchestrated by Claude Code Subagents. Click on any step below to explore the agent responsible for that task.</p>
+        </header>
+
+        <main>
+            <section id="pipeline-diagram" class="mb-12">
+                <h2 class="text-2xl font-bold text-center mb-8">The Workflow: From Code to Cloud</h2>
+                <div id="pipeline-container" class="flex lg:flex-row flex-col items-center justify-center flex-wrap">
+                </div>
+            </section>
+
+            <section id="agent-details-section" class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[400px]">
+                <div id="details-placeholder" class="flex flex-col items-center justify-center h-full text-center text-stone-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M17.062 6.313c.384-.384.384-1.007 0-1.391l-1.391-1.391a1 1 0 00-1.391 0L12.062 5.75 9.843 3.53a1 1 0 00-1.391 0L7.062 4.922a1 1 0 000 1.391L9.28 8.531 7.062 10.75a1 1 0 000 1.391l1.391 1.391a1 1 0 001.391 0l2.219-2.219 2.219 2.219a1 1 0 001.391 0l1.391-1.391a1 1 0 000-1.391L14.72 8.531l2.342-2.218z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 14.25a.75.75 0 000-1.5.75.75 0 000 1.5z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                    <h3 class="text-xl font-semibold">Select a pipeline step</h3>
+                    <p>Click an item in the workflow diagram above to see the agent's details.</p>
+                </div>
+                <div id="details-content" class="hidden">
+                    <h2 id="agent-title" class="text-3xl font-bold text-stone-900 mb-1"></h2>
+                    <p id="agent-subtitle" class="text-lg text-blue-600 font-semibold mb-4"></p>
+                    <p id="agent-description" class="text-stone-600 mb-6"></p>
+                    <div class="bg-stone-900 rounded-lg p-4">
+                        <pre class="text-sm text-white overflow-x-auto"><code id="agent-code"></code></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const pipelineData = [
+            { id: 'user-request', title: 'User Request', agent: null },
+            { id: 'orchestrator', title: 'Workflow Orchestrator', agent: 
+                {
+                    name: 'The Workflow Orchestrator: The Conductor',
+                    location: '.claude/agents/workflow-orchestrator.md',
+                    description: 'This agent manages the entire CI/CD process, coordinating the other agents and ensuring a smooth, sequential execution of tasks. It is responsible for the overall state and error handling.',
+                    code: `---
+name: workflow-orchestrator
+description: Main coordinator for the Java application deployment pipeline.
+tools: Task, Bash
+---
+You are the Workflow Orchestrator for the Java application CI/CD pipeline. Your role is to manage the entire process, from code validation to deployment.
+
+## Primary Responsibilities
+1.  **Execution Planning:** Define the sequence of operations in the pipeline.
+2.  **Agent Coordination:** Invoke each specialized agent in the correct order.
+3.  **State Management:** Track the progress of the deployment.
+4.  **Error Handling:** Stop the pipeline if any step fails and report the specific error.
+
+## Workflow Sequence
+1.  **Lint:** Call \`java-linter\` to check the code style.
+2.  **Test:** Use \`java-tester\` to run unit tests.
+3.  **Scan:** Start \`vulnerability-scanner\` to check dependencies.
+4.  **Build:** Activate \`maven-builder\` to create the artifact.
+5.  **Docker Build:** Run \`docker-builder\` to create the container image.
+6.  **Docker Push:** Call \`docker-pusher\` to upload the image to the registry.
+7.  **Deploy:** Use \`java-deployer\` to release the application.
+8.  **Cleanup:** Finish the process with \`file-organizer\` to remove temporary files.
+
+Always delegate tasks to specialized agents. Do not perform the actions yourself.`
+                }
+            },
+            { id: 'linter', title: 'Java Linter', agent: 
+                {
+                    name: 'The Java Linter: The Code Stylist',
+                    location: '.claude/agents/java-linter.md',
+                    description: 'This agent ensures that the Java code adheres to established style standards, catching potential errors and improving readability before testing begins.',
+                    code: `---
+name: java-linter
+tools: Bash
+---
+You are a Java code linter. Your task is to check for code style violations using the Maven Checkstyle plugin.
+
+## Linting Process
+1.  **Environment Check:** Ensure that Maven (\`mvn\`) is installed.
+2.  **Run Check:** Execute the command \`mvn checkstyle:check\`.
+3.  **Report Results:**
+    - If the check passes successfully, report success to the orchestrator.
+    - If errors are found, report the specific errors and signal a failure.`
+                }
+            },
+            { id: 'tester', title: 'Java Tester', agent: 
+                {
+                    name: 'The Java Tester: The Quality Gatekeeper',
+                    location: '.claude/agents/java-tester.md',
+                    description: 'This specialist runs the automated test suite to verify the correctness of the application\'s logic and to ensure that recent changes have not introduced regressions.',
+                    code: `---
+name: java-tester
+tools: Bash
+---
+You are a Java test executor. Your responsibility is to run the project's unit tests using Maven.
+
+## Testing Process
+1.  **Environment Check:** Ensure that Maven (\`mvn\`) is installed.
+2.  **Run Tests:** Execute the command \`mvn test\`. Maven automatically uses the Surefire Plugin to run JUnit or TestNG tests.
+3.  **Report Status:**
+    - If all tests pass, signal success.
+    - If any test fails, report the details of the failed test and signal a failure.`
+                }
+            },
+            { id: 'scanner', title: 'Vulnerability Scanner', agent: 
+                {
+                    name: 'The Vulnerability Scanner: The Security Guard',
+                    location: '.claude/agents/vulnerability-scanner.md',
+                    description: 'This agent acts as a security checkpoint, scanning the project\'s dependencies for known vulnerabilities.',
+                    code: `---
+name: vulnerability-scanner
+tools: Bash, Read
+---
+You are a security scanner. Your task is to check Java dependencies for known vulnerabilities using the OWASP Dependency-Check plugin for Maven.
+
+## Scanning Process
+1.  **Tool Check:** Ensure the plugin is configured in \`pom.xml\`.
+2.  **Run Scan:** Execute \`mvn org.owasp:dependency-check-maven:check\`.
+3.  **Report Findings:**
+    - If no vulnerabilities are found, report success.
+    - If vulnerabilities are detected, report the issues with their severity level and signal a failure to the orchestrator.`
+                }
+            },
+            { id: 'builder', title: 'Maven Builder', agent: 
+                {
+                    name: 'The Maven Builder: The Packager',
+                    location: '.claude/agents/maven-builder.md',
+                    description: 'This agent compiles the Java source code and packages it into an executable artifact (`.jar` or `.war`).',
+                    code: `---
+name: maven-builder
+tools: Bash
+---
+You are a Maven builder. Your function is to compile and package the Java application.
+
+## Build Process
+1.  **Maven Check:** Ensure \`mvn\` is available.
+2.  **Clean and Package:** Execute the command \`mvn clean package\`.
+3.  **Error Handling:** If the build fails, capture the error output and report it.
+4.  **Success Confirmation:** In case of a successful build, report the name and location of the created artifact (e.g., \`target/my-app-1.0.jar\`).`
+                }
+            },
+            { id: 'docker-builder', title: 'Docker Builder', agent:
+                {
+                    name: 'The Docker Builder: The Containerizer',
+                    location: '.claude/agents/docker-builder.md',
+                    description: 'This agent encapsulates the application and all its dependencies into a standardized, portable Docker container image.',
+                    code: `---
+name: docker-builder
+tools: Bash
+---
+You are a Docker image builder. Your function is to create a container image from a Dockerfile.
+
+## Build Process
+1.  **Docker Check:** Ensure the Docker daemon is running (\`docker info\`).
+2.  **Find Dockerfile:** Locate the \`Dockerfile\` in the project root.
+3.  **Execute Build:** Run the command \`docker build -t my-java-app:latest .\`.
+4.  **Error Handling:** If the build fails, capture the Docker error output and report it.
+5.  **Success Confirmation:** On a successful build, report the new image ID.`
+                }
+            },
+            { id: 'docker-pusher', title: 'Docker Pusher', agent:
+                {
+                    name: 'The Docker Pusher: The Distributor',
+                    location: '.claude/agents/docker-pusher.md',
+                    description: 'Once the image is built, this agent pushes it to a central container registry, making it available for deployment.',
+                    code: `---
+name: docker-pusher
+tools: Bash
+---
+You push Docker images to a container registry.
+
+## Push Process
+1.  **Authentication Check:** Ensure the user is logged into a registry (e.g., Docker Hub).
+2.  **Tag Image:** Tag the image with the registry's URL (e.g., \`docker tag my-java-app:latest username/my-java-app:latest\`).
+3.  **Execute Push:** Run the command \`docker push username/my-java-app:latest\`.
+4.  **Report Status:** Report whether the push was successful or if authentication failed.`
+                }
+            },
+            { id: 'deployer', title: 'Java Deployer', agent: 
+                {
+                    name: 'The Java Deployer: The Release Manager',
+                    location: '.claude/agents/java-deployer.md',
+                    description: 'This agent performs the final step of releasing the application into the production or staging environment.',
+                    code: `---
+name: java-deployer
+tools: Bash
+---
+You are a deployment agent. Your task is to deploy a specified Docker container to the target environment.
+
+## Deployment Process
+1.  **Identify Target:** Determine the deployment environment (e.g., Kubernetes, Azure App Service, AWS Elastic Beanstalk).
+2.  **Formulate Command:** Construct the appropriate CLI command to deploy the container image from the registry (e.g., \`kubectl set image ...\` or \`az webapp deploy ...\`).
+3.  **Execute Deployment:** Run the deployment command.
+4.  **Verify Status:** Check the status of the rollout to ensure the new version is live and healthy.
+5.  **Report Outcome:** Signal success or failure to the orchestrator.`
+                }
+            },
+            { id: 'organizer', title: 'File Organizer', agent: 
+                {
+                    name: 'The File Organizer: The Cleaner',
+                    location: '.claude/agents/file-organizer.md',
+                    description: 'This final agent cleans up the workspace, removing any temporary files or build artifacts generated during the pipeline run.',
+                    code: `---
+name: file-organizer
+tools: Bash
+---
+You manage the project's directory structure and clean up build artifacts.
+
+## Cleanup Process
+1.  **Identify Artifacts:** Locate all build artifacts, primarily the \`target\` directory.
+2.  **Execute Cleanup:** Run \`mvn clean\` or manually delete the \`target\` directory.
+3.  **Verify Workspace:** Ensure the project directory is returned to a clean state.
+4.  **Report Completion:** Signal that cleanup is complete.`
+                }
+            },
+            { id: 'complete', title: 'Completion', agent: null }
+        ];
+
+        const pipelineContainer = document.getElementById('pipeline-container');
+        const detailsPlaceholder = document.getElementById('details-placeholder');
+        const detailsContent = document.getElementById('details-content');
+        const agentTitle = document.getElementById('agent-title');
+        const agentSubtitle = document.getElementById('agent-subtitle');
+        const agentDescription = document.getElementById('agent-description');
+        const agentCode = document.getElementById('agent-code');
+        
+        let activeStep = null;
+
+        function displayAgentDetails(stepId) {
+            const stepData = pipelineData.find(p => p.id === stepId);
+            if (!stepData || !stepData.agent) {
+                detailsPlaceholder.classList.remove('hidden');
+                detailsContent.classList.add('hidden');
+                return;
+            }
+
+            detailsPlaceholder.classList.add('hidden');
+            detailsContent.classList.remove('hidden');
+
+            const agent = stepData.agent;
+            agentTitle.textContent = agent.name;
+            agentSubtitle.textContent = agent.location;
+            agentDescription.textContent = agent.description;
+            agentCode.textContent = agent.code;
+        }
+
+        pipelineData.forEach((step, index) => {
+            const stepEl = document.createElement('button');
+            stepEl.className = 'flow-step bg-white rounded-lg p-3 m-1 shadow-md hover:shadow-xl text-stone-700 hover:text-blue-600 border-transparent w-full md:w-auto text-center';
+            if (!step.agent) {
+                 stepEl.className += ' bg-stone-100 text-stone-500 cursor-not-allowed';
+            }
+            stepEl.dataset.id = step.id;
+            stepEl.textContent = `${index}. ${step.title}`;
+            
+            if (step.agent) {
+                stepEl.addEventListener('click', () => {
+                    if (activeStep) {
+                        activeStep.classList.remove('active');
+                    }
+                    stepEl.classList.add('active');
+                    activeStep = stepEl;
+                    displayAgentDetails(step.id);
+                    document.getElementById('agent-details-section').scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+
+            pipelineContainer.appendChild(stepEl);
+
+            if (index < pipelineData.length - 1) {
+                const connector = document.createElement('div');
+                connector.className = 'flow-arrow flex items-center justify-center';
+                pipelineContainer.appendChild(connector);
+            }
+        });
+
+        const initialStep = document.querySelector('[data-id="orchestrator"]');
+        if (initialStep) {
+            initialStep.click();
+        }
+
+    </script>
+</body>
+</html>
