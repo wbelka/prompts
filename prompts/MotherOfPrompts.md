@@ -1,4 +1,4 @@
-Universal prompt for initializing an AIDD project
+Universal prompt for initializing a project
 Copy all the text below, from start to finish, insert your data, and pass it to the AI agent.
 
 ROLE

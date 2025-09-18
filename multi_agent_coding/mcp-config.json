@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "stdio": {
+      "sequential-thinking": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+        "env": {}
+      },
+      "kubernetes": {
+        "command": "python3",
+        "args": ["-m", "kubectl_mcp_tool.mcp_server"],
+        "env": {
+          "KUBECONFIG": "~/.kube/config"
+        }
+      },
+      "context7": {
+        "command": "npx",
+        "args": ["-y", "@upstash/context7-mcp"],
+        "env": {}
+      },
+      "magic": {
+        "command": "npx",
+        "args": ["-y", "@21st-dev/magic"],
+        "env": {}
+      },
+      "playwright": {
+        "command": "npx",
+        "args": ["-y", "@playwright/mcp@latest"],
+        "env": {}
+      },
+      "gemini-cli": {
+        "command": "npx",
+        "args": ["-y", "gemini-mcp-tool"],
+        "env": {}
+      },
+      "qwen-cli": {
+        "command": "npx",
+        "args": ["-y", "qwen-mcp-tool"],
+        "env": {}
+      }
+    }
+  }
+}
