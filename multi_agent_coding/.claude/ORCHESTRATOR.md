@@ -112,38 +112,38 @@ wave_eligible:
 analysis:
   verbs: [analyze, review, explain, understand, investigate, troubleshoot]
   outputs: [insights, recommendations, reports]
-  typical_tools: [Grep, Read, Sequential]
+  typical_tools: [gemini-mcp, Grep, Read]
 
 creation:
   verbs: [create, build, implement, generate, design]
   outputs: [new files, features, components]
-  typical_tools: [Write, Magic, Context7]
+  typical_tools: [Sequential, Write, Magic, Context7]
 
 implementation:
   verbs: [implement, develop, code, construct, realize]
   outputs: [working features, functional code, integrated components]
-  typical_tools: [Write, Edit, MultiEdit, Magic, Context7, Sequential]
+  typical_tools: [Sequential, Write, Edit, MultiEdit, Magic, Context7]
 
 modification:
   verbs: [update, refactor, improve, optimize, fix]
   outputs: [edited files, improvements]
-  typical_tools: [Edit, MultiEdit, Sequential]
+  typical_tools: [Sequential, Edit, MultiEdit]
 
 debugging:
   verbs: [debug, fix, troubleshoot, resolve, investigate]
   outputs: [fixes, root causes, solutions]
-  typical_tools: [Grep, Sequential, Playwright]
+  typical_tools: [gemini-mcp, Grep, Playwright]
 
 iterative:
   verbs: [improve, refine, enhance, correct, polish, fix, iterate, loop]
   outputs: [progressive improvements, refined results, enhanced quality]
-  typical_tools: [Sequential, Read, Edit, MultiEdit, TodoWrite]
+  typical_tools: [gemini-mcp -> Sequential, Read, Edit, MultiEdit]
 
 wave_operations:
   verbs: [comprehensively, systematically, thoroughly, progressively, iteratively]
   modifiers: [improve, optimize, refactor, modernize, enhance, audit, transform]
   outputs: [comprehensive improvements, systematic enhancements, progressive transformations]
-  typical_tools: [Sequential, Task, Read, Edit, MultiEdit, Context7]
+  typical_tools: [gemini-mcp -> Sequential -> qwen-mcp, Task, Read, Write, Edit]
   wave_patterns: [review-plan-implement-validate, assess-design-execute-verify, analyze-strategize-transform-optimize]
 ```
 
@@ -166,10 +166,18 @@ wave_operations:
 
 ## 🚦 Routing Intelligence
 
-Dynamic decision trees that map detected patterns to optimal tool combinations, persona activation, and orchestration strategies.
+Dynamic decision trees that map detected patterns to optimal tool combinations, persona activation, and orchestration strategies. This system uses a multi-agent approach, assigning roles to different AI models based on their strengths.
+
+- **Gemini (`gemini-mcp`)**: The Analyst & Architect. Handles deep analysis, planning, and understanding.
+- **Claude (Native)**: The Coder & Refactorer. Executes coding tasks based on Gemini's plans.
+- **Qwen (`qwen-mcp`)**: The Assistant. Manages quick, simple, and low-cost tasks.
 
 ### Wave Orchestration Engine
-Multi-stage command execution with compound intelligence. Automatic complexity assessment or explicit flag control.
+The Wave Orchestration Engine facilitates multi-agent pipelines. For complex tasks, it sequences the AI models:
+
+1.  **Wave 1 (Analysis):** **Gemini** analyzes the problem and creates a plan.
+2.  **Wave 2 (Implementation):** **Claude** executes the plan by writing or modifying code.
+3.  **Wave 3 (Validation/Wrap-up):** **Qwen** can be used for final checks, documentation, or summarization.
 
 **Wave Control Matrix**:
 ```yaml
@@ -177,7 +185,7 @@ wave-activation:
   automatic: "complexity >= 0.7"
   explicit: "--wave-mode, --force-waves"
   override: "--single-wave, --wave-dry-run"
-  
+
 wave-strategies:
   progressive: "Incremental enhancement"
   systematic: "Methodical analysis"
@@ -190,36 +198,37 @@ wave-strategies:
 
 ### Master Routing Table
 
-| Pattern | Complexity | Domain | Auto-Activates | Confidence |
-|---------|------------|---------|----------------|------------|
-| "analyze architecture" | complex | infrastructure | architect persona, --ultrathink, Sequential | 95% |
-| "create component" | simple | frontend | frontend persona, Magic, --uc | 90% |
-| "implement feature" | moderate | any | domain-specific persona, Context7, Sequential | 88% |
-| "implement API" | moderate | backend | backend persona, --seq, Context7 | 92% |
-| "implement UI component" | simple | frontend | frontend persona, Magic, --c7 | 94% |
-| "implement authentication" | complex | security | security persona, backend persona, --validate | 90% |
-| "fix bug" | moderate | any | analyzer persona, --think, Sequential | 85% |
-| "optimize performance" | complex | backend | performance persona, --think-hard, Playwright | 90% |
-| "security audit" | complex | security | security persona, --ultrathink, Sequential | 95% |
-| "write documentation" | moderate | documentation | scribe persona, --persona-scribe=en, Context7 | 95% |
-| "improve iteratively" | moderate | iterative | intelligent persona, --seq, loop creation | 90% |
-| "analyze large codebase" | complex | any | --delegate --parallel-dirs, domain specialists | 95% |
-| "comprehensive audit" | complex | multi | --multi-agent --parallel-focus, specialized agents | 95% |
-| "improve large system" | complex | any | --wave-mode --adaptive-waves | 90% |
-| "security audit enterprise" | complex | security | --wave-mode --wave-validation | 95% |
-| "modernize legacy system" | complex | legacy | --wave-mode --enterprise-waves --wave-checkpoint | 92% |
-| "comprehensive code review" | complex | quality | --wave-mode --wave-validation --systematic-waves | 94% |
+| Pattern | Complexity | Domain | Auto-Activates | Workflow | Confidence |
+|---|---|---|---|---|---|
+| "analyze architecture" | complex | infrastructure | architect persona, --ultrathink | `gemini-mcp` | 95% |
+| "create component" | simple | frontend | frontend persona, Magic, --uc | `claude` | 90% |
+| "implement feature" | moderate | any | domain-specific persona | `gemini-mcp` -> `claude` | 88% |
+| "implement API" | moderate | backend | backend persona, --seq | `gemini-mcp` -> `claude` | 92% |
+| "implement UI component" | simple | frontend | frontend persona, Magic | `claude` | 94% |
+| "implement authentication" | complex | security | security persona, backend persona | `gemini-mcp` -> `claude` | 90% |
+| "fix bug" | moderate | any | analyzer persona, --think | `gemini-mcp` -> `claude` | 85% |
+| "optimize performance" | complex | backend | performance persona, --think-hard | `gemini-mcp` -> `claude` -> `qwen-mcp` | 90% |
+| "security audit" | complex | security | security persona, --ultrathink | `gemini-mcp` | 95% |
+| "write documentation" | moderate | documentation | scribe persona | `qwen-mcp` | 95% |
+| "improve iteratively" | moderate | iterative | intelligent persona, --seq | `gemini-mcp` -> `claude` | 90% |
+| "analyze large codebase" | complex | any | --delegate --parallel-dirs | `gemini-mcp` | 95% |
+| "comprehensive audit" | complex | multi | --multi-agent --parallel-focus | `gemini-mcp` | 95% |
+| "improve large system" | complex | any | --wave-mode --adaptive-waves | `gemini-mcp` -> `claude` -> `qwen-mcp` | 90% |
+| "security audit enterprise" | complex | security | --wave-mode --wave-validation | `gemini-mcp` -> `claude` | 95% |
+| "modernize legacy system" | complex | legacy | --wave-mode --enterprise-waves | `gemini-mcp` -> `claude` | 92% |
+| "comprehensive code review" | complex | quality | --wave-mode --wave-validation | `gemini-mcp` -> `claude` | 94% |
 
 ### Decision Trees
 
 #### Tool Selection Logic
 
 **Base Tool Selection**:
-- **Search**: Grep (specific patterns) or Agent (open-ended)
-- **Understanding**: Sequential (complexity >0.7) or Read (simple)  
-- **Documentation**: Context7
-- **UI**: Magic
-- **Testing**: Playwright
+- **Analysis & Understanding**: `gemini-mcp` (via `--think`, `--ultrathink`)
+- **Coding & Implementation**: `claude` (native, for `/implement`, `/build`, `/improve`)
+- **Quick Tasks & Documentation**: `qwen-mcp` (for `/qwen-quick`, `/document`)
+- **Search**: Grep (specific patterns) or `gemini-mcp` (open-ended)
+- **UI**: Magic (used by `claude` during implementation)
+- **Testing**: Playwright (for validation)
 
 **Delegation & Wave Evaluation**:
 - **Delegation Score >0.6**: Add Task tool, auto-enable delegation flags based on scope

@@ -169,44 +169,52 @@ This setup adds a powerful set of slash commands to your Claude Code environment
 - `/gemini-analyze [file] [focus]`: Sends a file directly to Gemini for in-depth analysis.
 - `/qwen-quick [question]`: Gets a fast response from Qwen for simple questions.
 
-## 💡 Smart Routing Logic
+## 💡 Multi-Agent Routing Logic
 
-The `/ai-route` command uses the following logic to select the best AI model:
+This setup uses a sophisticated multi-agent pipeline to handle tasks, assigning a specific role to each AI based on its strengths.
 
-### By File Size
-- **Large files (>1000 lines)**: Gemini (extended context)
-- **Medium files (100-1000 lines)**: Intelligent routing based on task type.
-- **Small files (<100 lines)**: Qwen (fast and efficient)
+*   **Gemini (`gemini-mcp`): The Analyst & Architect.** Handles deep analysis, planning, and architectural understanding.
+*   **Claude (Native, via `Sequential`): The Coder & Refactorer.** Executes coding and refactoring tasks based on a plan.
+*   **Qwen (`qwen-mcp`): The Assistant.** Manages quick, simple tasks like documentation and quick queries.
 
-### By Task Type
-- **Debug/Error**: Sequential thinking (systematic)
-- **Quick/Format**: Qwen (fast)
-- **Architecture**: Gemini (comprehensive)
-- **Cost-sensitive**: Try Qwen → Gemini → Claude fallback
+## 🧪 How to Use the Pipelines (Examples)
 
-## 🧪 Example Usage
+The orchestration happens automatically based on the command you use. You don't need to specify the model manually.
 
-Here are a few examples of how you can use the new commands:
+### Example 1: Improving Existing Code
+
+When you want to refactor or improve a file, you can use the `/improve` command.
 
 ```bash
-# Get recommendations for a task
-/ai-help large_file.py analyze
-
-# Ask a quick question
-/qwen-quick "explain this regex pattern"
-
-# Analyze a large file
-/gemini-analyze microservice.py "performance bottlenecks"
-
-# Perform a multi-perspective code review
-/code-review auth.py security
-
-# Debug an issue systematically
-/debug-issue api.py "500 internal server error" "happens on POST requests"
-
-# Analyze the project architecture
-/analyze-architecture src/ scalability
+/improve sample_code.py
 ```
+
+*   **What happens:**
+    1.  **Gemini (Analysis):** Analyzes `sample_code.py` to find security flaws, performance issues, and areas for refactoring. It creates a step-by-step plan.
+    2.  **Claude (Implementation):** Receives the plan and systematically modifies the code to implement the proposed improvements.
+    3.  **Qwen (Summarization):** (Optional) Can be triggered to generate a summary of the changes or a commit message.
+
+### Example 2: Implementing a New Feature
+
+To implement a new feature, you can use the `/implement` command with a description.
+
+```bash
+/implement "a new function to export users to a CSV file"
+```
+
+*   **What happens:**
+    1.  **Gemini (Planning):** Analyzes the request and the existing codebase (`UserManager` class, etc.). It designs the function and creates a plan for where to add it and how it should work.
+    2.  **Claude (Coding):** Takes the plan and writes the new `export_to_csv` function, including necessary imports and error handling.
+
+### Example 3: A Quick Question
+
+For simple, fast questions, you can use `/qwen-quick`.
+
+```bash
+/qwen-quick "what does the 'os' module in python do?"
+```
+
+*   **What happens:** The query is routed directly to **Qwen** for a fast and efficient answer.
 
 ## 🆘 Troubleshooting
 
